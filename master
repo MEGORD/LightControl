@@ -1,0 +1,53 @@
+#define ENTRANCE_PIN 2
+#define EXIT_PIN 3
+#define LIGHT_PIN 13
+
+volatile int peopleCount = 0;
+volatile bool entranceTriggered = false;
+volatile bool exitTriggered = false;
+
+void setup() {
+  pinMode(ENTRANCE_PIN, INPUT);
+  pinMode(EXIT_PIN, INPUT);
+  pinMode(LIGHT_PIN, OUTPUT);
+
+  attachInterrupt(digitalPinToInterrupt(ENTRANCE_PIN), entrance, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(EXIT_PIN), exit, CHANGE);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  if (peopleCount > 0) {
+    digitalWrite(LIGHT_PIN, HIGH);
+  } else {
+    digitalWrite(LIGHT_PIN, LOW);
+  }
+
+  Serial.print("People in the room: ");
+  Serial.println(peopleCount);
+
+  delay(1000);
+}
+
+void entrance() {
+  if (digitalRead(ENTRANCE_PIN) == HIGH) {
+    entranceTriggered = true;
+  } else {
+    if (exitTriggered && entranceTriggered) {
+      peopleCount = max(0, peopleCount + 1); // Увеличиваем, но не более 0
+    }
+    entranceTriggered = false;
+  }
+}
+
+void exit() {
+  if (digitalRead(EXIT_PIN) == HIGH) {
+    exitTriggered = true;
+  } else {
+    if (entranceTriggered && exitTriggered) {
+      peopleCount = max(0, peopleCount - 1); // Уменьшаем, но не меньше 0
+    }
+    exitTriggered = false;
+  }
+}
